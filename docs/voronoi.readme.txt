@@ -1,0 +1,37 @@
+The program VORONOI takes input the name of a file 
+containing a list of samples to be analysed
+and an output filename. The file listing the samples should
+first contain the number of samples, and then the sample
+numbers.
+
+For example,
+4 1 5 6 7
+would indicate there are 4 sampels to be analysed, and they are
+samples numbered 1, 5, 6 and 7.
+
+The current directory must contain the output of 9 SCAT runs for
+these samples, using the "tags" r,s,t,u,v,w,x,y and z. Thus
+for the above example the directory shoudl contain files
+001r 001s 001t 001u 001v 001w 001x 001y 001z
+005r 005s 005t 005u 005v 005w 005x 005y 005z
+... etc.
+
+
+VORONOI shoudl be given a flag -d if the data are savannah, and -D if they are forest.
+
+Example usage: ./VORONOI -d samplelist.txt temp.out
+
+The most important output file produced will be temp.out_indprobs
+This contains, for each individual in turn, a 67 by 67 matrix, the ij entry
+containing the probability that the individual came from grid cell i,j.
+These grid cells are each 1 degree lat by 1 degree longitude, running from
+17W to 50E and 36S to 31N. Note that many of these cells are in the Sea!
+So there are a lot of 0 probabilities.
+
+
+
+
+
+
+
+
