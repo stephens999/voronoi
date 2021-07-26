@@ -1028,6 +1028,9 @@ int main ( int argc, char** argv)
   
   double newloglik, currentloglik;
 
+  int output_now = NITER / 5;
+  int output_interval = output_now;
+  cout << "Starting MCMC iterations" << flush;
 
   for(int iter = 0; iter<NITER; iter++){
     assert(SumCountsLegal(SUMCOUNTS));
@@ -1037,8 +1040,11 @@ int main ( int argc, char** argv)
       cerr << "Failed at top of iter loop" << endl;
       exit(-1);
     }
-    if (iter % 1000 == 0) {
-      cout << "iter = " << iter << endl;
+//   if (iter % 1000 == 0) {
+//     cout << "iter = " << iter << endl;
+    if (iter == output_now) {
+      cout << "." << flush;
+      output_now += output_interval;
     }
 
     UpdateZs(Vprob,CellSize,REGIONSIZE,SUMCOUNTS,LCOUNTS,TOTALCOUNTS,REGION,VoronoiZ,BESTPOINT,REJECT_CUTOFF);
@@ -1070,7 +1076,6 @@ int main ( int argc, char** argv)
       //cout << "Vprob = " << Vprob << endl;
       tracefile << iter << " " << Vprob << endl;
     }
-
 
     assert(SumCountsLegal(SUMCOUNTS));
     vector<double> oldVoronoiX(VoronoiX);
@@ -1151,6 +1156,7 @@ int main ( int argc, char** argv)
       }
     }
   }
+  cout << "." << endl;
   
   string outputfilename = filenames["output"];
   ofstream output (outputfilename.c_str());
@@ -1179,4 +1185,5 @@ int main ( int argc, char** argv)
   }
 
   
+cout << endl << "Program done" << endl;
 }
