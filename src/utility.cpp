@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include <cmath>
 
+// VORONOI version 2.0.0
+
 using namespace std;
 
 

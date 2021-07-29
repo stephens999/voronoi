@@ -8,7 +8,8 @@ INCLUDE = -I. -I..
 #CFLAGS = -O2 -DNDEBUG -DTREAT_SNPS_AS_MS $(INCLUDE)
 #CFLAGS = -O2 -DBIGDATASETS $(INCLUDE)
 #CFLAGS = -g $(INCLUDE)
-CFLAGS = -O2  $(INCLUDE)
+#CFLAGS = -O2 -Wall  $(INCLUDE)
+CFLAGS = -O3  $(INCLUDE)
 #CFLAGS = -g -a -O2 -pg -DNDEBUG $(INCLUDE)
 
 #LDFLAGS = -llapack -lg2c -lm
@@ -16,15 +17,10 @@ CFLAGS = -O2  $(INCLUDE)
 #LDFLAGS = /usr/lib/liblapack.a /usr/lib/gcc-lib/i386-redhat-linux/3.2.3/libg2c.a /usr/lib/libm.a /usr/lib/libblas.a
 #LDFLAGS = -llapack /usr/lib/gcc-lib/i386-redhat-linux/3.2.3/libg2c.a /usr/lib/libm.a
 
-SUFFIXES: 
-.SUFFIXES: .cpp .o
 
-.cpp.o:
-	$(CXX) $(CFLAGS) -c $<
 
+OBJ = voronoi.o utility.o readboundary.o
 TESTOBJ = test.o test2.o
-
-OBJ = voronoi.o utility.o
 
 VORONOI : $(OBJ)
 	$(CXX) $(CFLAGS) -o $@ $^ $(LDFLAGS)
@@ -32,10 +28,17 @@ VORONOI : $(OBJ)
 test: $(TESTOBJ)
 	$(CXX) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
+SUFFIXES: 
+.SUFFIXES: .cpp .o
+
+.cpp.o:
+	$(CXX) $(CFLAGS) -c $<
 
 voronoi.o   : voronoi.cpp $(HDR)
 
 utility.o : utility.cpp $(HDR)
+
+boundary.o : boundary.cpp $(HDR)
 
 TAGS: *.hpp *.cpp
 	etags $^

@@ -2,6 +2,7 @@
 #include <map>
 #include <vector>
 
+// VORONOI version 2.0.0
 using namespace std;
 
 double ranf();
