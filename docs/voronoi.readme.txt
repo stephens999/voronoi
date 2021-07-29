@@ -1,3 +1,9 @@
+This was the original documentation file for VORONOI 1.0.  It has been
+superseded by docs/voronoi_manual.pdf for VORONOI 2.0 but is maintained for
+historical reasons.
+
+***
+
 The program VORONOI takes input the name of a file 
 containing a list of samples to be analysed
 and an output filename. The file listing the samples should
@@ -17,7 +23,8 @@ for the above example the directory shoudl contain files
 ... etc.
 
 
-VORONOI shoudl be given a flag -d if the data are savannah, and -D if they are forest.
+VORONOI should be given a flag -d if the data are savannah, and -D if they 
+are forest.
 
 Example usage: ./VORONOI -d samplelist.txt temp.out
 
@@ -27,11 +34,3 @@ containing the probability that the individual came from grid cell i,j.
 These grid cells are each 1 degree lat by 1 degree longitude, running from
 17W to 50E and 36S to 31N. Note that many of these cells are in the Sea!
 So there are a lot of 0 probabilities.
-
-
-
-
-
-
-
-
