@@ -178,7 +178,7 @@ specification must match that used in the \SCAT runs.}  As a result, if you have
 will not be able to use grid file boundary specification, as this was only added to \SCAT in version 3.0.
 The boundary can be specified in three ways, with the most useful listed first.
 
-\subsection{Grid file}
+\subsection{Grid file ({\tt -g})}
 
 Inform the program of the use of a grid file with the -g option:
 
@@ -224,7 +224,7 @@ accuracy, although
 we believe this will be a bigger issue for \SCAT than \VORONOI.  All of our practical 
 experience is with African elephants, which occur fairly far from the poles.
 
-\subsection{Polygon boundary file}
+\subsection{Polygon boundary file ({\tt -b})}
 
 This option allows you to specify the boundary of the species range as an arbitrary 
 polygon.  The polygon is specified by entering the latitude and longitude of
@@ -268,7 +268,7 @@ including the North or South Pole.   We recommend recoding such
 data and reversing the recoding before interpreting the results.  It
 is possible that no usable recoding exists for a circumpolar or very widespread species.
 
-\subsection{Inbuilt boundaries}
+\subsection{Inbuilt boundaries ({\tt -D, -d})}
 
 \VORONOI was written to analyze African elephant data, and contains hard-coded
 boundaries for savannah and forest African elephants.  These boundaries are 
@@ -397,10 +397,11 @@ R evolved over the course of the run.
 
 This file is simply named {\it PREFIX}.  It contains one grid, dimensioned the same
 way as the ones in {\tt PREFIX\_indprobs}, but containing the posterior probability, for
-each grid square, that it was live (within both the region R in which all samples were
+each grid square, that it was live (within both the region (called R in the paper)
+in which all samples were
 inferred to lie, and the species range), taken as an average over all iterations.  
 Surprisingly, this includes burn-in iterations.  The contents of this file can be taken
-as an estimate of the region R.  
+as an estimate of R.  
 
 \subsection{Trace file}
 
@@ -457,10 +458,11 @@ Two serious bugs present in 1.0 were corrected in 2.0.  Both
 caused incoherency of the program state on a particular accepted or rejected MCMC
 step.  Specifically, the program maintained both a list of which polygons were
 active, and a count of how many grid squares were in active polygons.
-On some MCMC steps the count of grid squares was not correctly updated and would
+The code contained two different routines in which the count of grid squares was not 
+correctly updated and would
 disagree with the information in the list of polygons.  We believe that these bugs 
-caused a bias towards tighter clustering (fewer active polygons) but their main effect was
-to add noise to the analysis.  We recommend re-running any results obtained with 1.0.
+caused a bias towards tighter clustering (fewer active polygons) as well as
+adding noise to the analysis.  We recommend re-running any results obtained with 1.0.
 
 \subsubsection{ Inference of $p$} 
 The mathematical model was changed between 1.0 and 2.0.   
@@ -520,8 +522,11 @@ Version 1.0 always used a 67 x 67 grid of one-degree squares.  Version 2.0 uses 
 grid if the built-in defaults or a polygon boundary file are used, but if a grid file is used,
 \VORONOI will instead determine the size of its grid by taking the smallest square region 
 that contains all of the specified grid squares and then adding a 7 square boundary on all 
-sides.  {\bf Note that downstream code which expected a 67 x 67 grid will be affected by
-this change.}
+sides.  
+{\bf If you have written code, scripts, or spreadsheets that process \VORONOI output, they
+probably expect a 67 x 67 grid and will need to be modified accordingly.}  We consider
+the cost in backwards compatibility to be justified by the ability to analyze areas 
+smaller or larger than the African elephant range in a straightforward fashion.
 
 Limited error checking of input files and data has been added.
 
