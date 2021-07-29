@@ -9,8 +9,6 @@ using namespace std;
 
 const string VORONOI_VERSION = "2.0.1";
 
-//char TAG = 'r';  
-
 // The following values are defaults and can change during the run
 double YMIN = -999;  // note that in this code, X and Y are mixed up
 double YMAX = -999; // X represents N-S and Y represent E-W. 
@@ -703,12 +701,6 @@ int main ( int argc, char** argv)
        cout << "Seed = " << SEED << endl;
     break;
 
-//    case 't': //tag to use for location output files
-//      ++argv;
-//      --argc;
-//      TAG = argv[1][0];
-//      break;
-
     case 'v':  // print additional output format
       PRINTPROBS = 1;
       break;
@@ -871,7 +863,6 @@ int main ( int argc, char** argv)
   vector<vector<vector<double> > > INDPROBS(NIND,vector<vector<double> >(GRIDSIZE,vector<double>(GRIDSIZE,0)));
   vector<double> SUMCOUNTS(NIND,0); // sum of number of times each individual is in REGION
 
-  
 
   //0/1 indicator of whether region is in or out
   vector<vector<int> > REGION(GRIDSIZE,vector<int>(GRIDSIZE,0));
@@ -1022,12 +1013,13 @@ int main ( int argc, char** argv)
   //ComputeLCount(COUNTS,BESTPOINT,LCOUNTS);
   //ComputeTotalCounts(LCOUNTS,TOTALCOUNTS);
 
-  //cerr << "Finished computing counts" << endl;
-  
   int ACCEPT=0;
   
   double newloglik, currentloglik;
 
+  int output_now = NITER / 5;
+  int output_interval = output_now;
+  cout << "Starting MCMC iterations" << flush;
 
   for(int iter = 0; iter<NITER; iter++){
     assert(SumCountsLegal(SUMCOUNTS));
@@ -1037,8 +1029,10 @@ int main ( int argc, char** argv)
       cerr << "Failed at top of iter loop" << endl;
       exit(-1);
     }
-    if (iter % 1000 == 0) {
-      cout << "iter = " << iter << endl;
+
+    if (iter == output_now) {
+      cout << "." << flush;
+      output_now += output_interval;
     }
 
     UpdateZs(Vprob,CellSize,REGIONSIZE,SUMCOUNTS,LCOUNTS,TOTALCOUNTS,REGION,VoronoiZ,BESTPOINT,REJECT_CUTOFF);
@@ -1070,7 +1064,6 @@ int main ( int argc, char** argv)
       //cout << "Vprob = " << Vprob << endl;
       tracefile << iter << " " << Vprob << endl;
     }
-
 
     assert(SumCountsLegal(SUMCOUNTS));
     vector<double> oldVoronoiX(VoronoiX);
@@ -1151,6 +1144,7 @@ int main ( int argc, char** argv)
       }
     }
   }
+  cout << "." << endl;
   
   string outputfilename = filenames["output"];
   ofstream output (outputfilename.c_str());
@@ -1179,4 +1173,5 @@ int main ( int argc, char** argv)
   }
 
   
+cout << endl << "Program done" << endl;
 }
