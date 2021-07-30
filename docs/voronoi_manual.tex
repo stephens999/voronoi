@@ -78,7 +78,21 @@ assigning locations to location-known individuals.  For details, see section \re
 
 \section{Compiling \VORONOI}
 
-We only provide source code.  \VORONOI is a C++ program and you will need the
+Executables are provided for Linux only; for other systems you will
+need to compile it yourself.  The provided executable is known to run
+on Ubuntu 18.04.5 but has not been tested elsewhere.  The executable
+is on GitHub in the main directory of the repository, with a name like
+{\tt voronoi.linux.X.tar.gz}.  To unpack it:
+
+{\tt gunzip voronoi.linux.X.tar.gz} \\
+{\tt tar -xvf voronoi.linux.X.tar} \\
+
+This will create a new directory called voronoi.linux.X.  Change to this
+directory before running the program, or move the program elsewhere.
+(It has very specific needs for input files to be found in its directory,
+as discussed below.)
+
+\VORONOI is a C++ program and you will need the
 GNU c++ compiler (g++) or equivalent to compile it.  (If you use a different
 compiler you will need to modify the Makefile.)
 
