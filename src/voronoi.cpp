@@ -660,6 +660,8 @@ int main ( int argc, char** argv)
   string bfilename;
   int SEED = 0;
   float REJECT_CUTOFF = 0.0;
+  int nmcmc = 100;
+  int skip = 100;
   map<string, string> filenames; 
   while( ( argc > 1 ) && ( argv[1][0] == '-' ) ) {
     switch(argv[1][1]) {
@@ -692,6 +694,13 @@ int main ( int argc, char** argv)
       ++argv; --argc;
       filenames["gridfile"] = argv[1];
       READGRID = 1;
+      break;
+
+   case 'N': // number of samples to expect
+      ++argv;
+      --argc;
+      nmcmc = atoi(&argv[1][0]);
+      cout << "Number of MCMC steps = " << nmcmc << endl;
       break;
 
    case 'S': // seed
@@ -747,8 +756,6 @@ int main ( int argc, char** argv)
 
   srandom(SEED);
 
-  int nmcmc = 100;
-  int skip = 100;
   filenames["samples"] = argv[1];
   filenames["output"]  = argv[2];
    
