@@ -9,8 +9,6 @@ using namespace std;
 
 const string VORONOI_VERSION = "2.0.1";
 
-char TAG = 'r';  
-
 // The following values are defaults and can change during the run
 double YMIN = -999;  // note that in this code, X and Y are mixed up
 double YMAX = -999; // X represents N-S and Y represent E-W. 
@@ -654,6 +652,68 @@ void UpdateZs(double Vprob, const IntVec1d& CellSize, int& REGIONSIZE, DoubleVec
   }
 }
 
+
+void Read_Oldstyle(const IntVec1d& samplevec, DoubleVec3d& counts, int NIND, int numburn, int numsampled) {
+  for(char TAG = 'r'; TAG<='z'; TAG++){
+     for(int s = 0; s < NIND; s++){
+       int sample = samplevec[s];
+       // new code by Mary Kuhner 8/21/2020, fixing bug that
+       // disallowed elephant numbers > 999
+       string infile = std::to_string(sample);
+       if (infile.length() == 1) {
+         infile = string("00") + infile;
+       }
+       if (infile.length() == 2) {
+         infile = string("0") + infile;
+       }
+       infile += TAG;
+
+       ifstream locatefile(infile.c_str());
+       if(!locatefile.is_open()) {
+         error_and_exit("Failed to open input file " + infile);
+       }
+      
+      double x,y,dummy;
+      // skipping SCAT burnin
+      for(int index = 0; index<numburn; index++){
+	locatefile >> x;
+	locatefile >> y;
+	locatefile >> dummy;
+      }
+      
+      // post-burning steps
+      for(int index = 0; index<numsampled; index++){
+	locatefile >> x;
+	locatefile >> y;
+	locatefile >> dummy;
+	
+	if(x>XMAX || x<XMIN || y>YMAX || y<YMIN){
+	  cerr << "Error: x or y out of bounds" << endl;
+	  cerr << "file = " << infile << endl;
+	  cerr << "x= " << x << endl;
+	  cerr << "y= " << y << endl;
+	  exit(1);
+	}
+	
+	int i = s; //sample - firstsample;
+	int j = (int) trunc(GRIDSIZE * (x-XMIN)/(XMAX-XMIN));
+	int k = (int) trunc(GRIDSIZE * (y-YMIN)/(YMAX-YMIN));
+
+        // Adjust mildly illegal input to the nearest legal grid square
+	if(!GridInRange(j,k)){
+          pair<int,int> newvals = make_legal(x,y);
+          j = newvals.first;
+          k = newvals.second;
+	} 
+	
+        assert(GridInRange(j,k));
+	counts[i][j][k] += 1;
+      }
+    }
+  }
+}
+
+
 int main ( int argc, char** argv)
 {
   cout << "VORONOI version " << VORONOI_VERSION << " ";
@@ -662,6 +722,8 @@ int main ( int argc, char** argv)
   string bfilename;
   int SEED = 0;
   float REJECT_CUTOFF = 0.0;
+  int nmcmc = 100;
+  int skip = 100;
   map<string, string> filenames; 
   while( ( argc > 1 ) && ( argv[1][0] == '-' ) ) {
     switch(argv[1][1]) {
@@ -696,18 +758,19 @@ int main ( int argc, char** argv)
       READGRID = 1;
       break;
 
+   case 'N': // number of samples to expect
+      ++argv;
+      --argc;
+      nmcmc = atoi(&argv[1][0]);
+      cout << "Number of MCMC steps = " << nmcmc << endl;
+      break;
+
    case 'S': // seed
       ++argv;
       --argc;
       SEED = atoi(&argv[1][0]);
        cout << "Seed = " << SEED << endl;
     break;
-
-    case 't': //tag to use for location output files
-      ++argv;
-      --argc;
-      TAG = argv[1][0];
-      break;
 
     case 'v':  // print additional output format
       PRINTPROBS = 1;
@@ -727,19 +790,15 @@ int main ( int argc, char** argv)
     exit(1);
   }
 
-  if(SAVANNAHONLY == -1 && !READBOUNDARY && !READGRID) {
-    cerr << "Please set boundaries on commandline" << endl;
-    cerr << "  -d for SAVANNAH and -D for FOREST" << endl;
+  bool BUILTIN = (SAVANNAHONLY == -1);
+
+  if(!BUILTIN && !READBOUNDARY && !READGRID) {
+    cerr << "Need to specify how boundaries are determined" << endl;
     exit(1);
   }
 
-  if(READBOUNDARY && SAVANNAHONLY == 1) {
-    cerr << "Please choose only one of -d and -B" << endl;
-    exit(1);
-  }
-
-  if(READBOUNDARY && SAVANNAHONLY == 0) {
-    cerr << "Please choose only one of -D and -B" << endl;
+  if((BUILTIN && READBOUNDARY) || (BUILTIN && READGRID) || (READBOUNDARY && READGRID)) {
+    cerr << "Two different boundary specifications given; please choose one" << endl;
     exit(1);
   }
 
@@ -755,8 +814,6 @@ int main ( int argc, char** argv)
 
   srandom(SEED);
 
-  int nmcmc = 100;
-  int skip = 100;
   filenames["samples"] = argv[1];
   filenames["output"]  = argv[2];
    
@@ -871,7 +928,6 @@ int main ( int argc, char** argv)
   vector<vector<vector<double> > > INDPROBS(NIND,vector<vector<double> >(GRIDSIZE,vector<double>(GRIDSIZE,0)));
   vector<double> SUMCOUNTS(NIND,0); // sum of number of times each individual is in REGION
 
-  
 
   //0/1 indicator of whether region is in or out
   vector<vector<int> > REGION(GRIDSIZE,vector<int>(GRIDSIZE,0));
@@ -884,64 +940,6 @@ int main ( int argc, char** argv)
   // so it can be retried if the proposed region doesn't contain all
   // elephants
 
-  for(char TAG = 'r'; TAG<='z'; TAG++){
-     //cout << "Reading " << TAG << endl;
-     for(int s = 0; s < NIND; s++){
-       int sample = samplevec[s];
-       // new code by Mary Kuhner 8/21/2020, fixing bug that
-       // disallowed elephant numbers > 999
-       string infile = std::to_string(sample);
-       if (infile.length() == 1) {
-         infile = string("00") + infile;
-       }
-       if (infile.length() == 2) {
-         infile = string("0") + infile;
-       }
-       infile += TAG;
-       //cout << "Reading from file " << infile << endl;
-
-       ifstream locatefile(infile.c_str());
-       if(!locatefile.is_open()) {
-         error_and_exit("Failed to open input file " + infile);
-       }
-      
-      double x,y,dummy;
-      // skipping SCAT burnin
-      for(int index = 0; index<skip; index++){
-	locatefile >> x;
-	locatefile >> y;
-	locatefile >> dummy;
-      }
-      
-      for(int index = 0; index<nmcmc; index++){
-	locatefile >> x;
-	locatefile >> y;
-	locatefile >> dummy;
-	
-	if(x>XMAX || x<XMIN || y>YMAX || y<YMIN){
-	  cerr << "Error: x or y out of bounds" << endl;
-	  cerr << "file = " << infile << endl;
-	  cerr << "x= " << x << endl;
-	  cerr << "y= " << y << endl;
-	  exit(1);
-	}
-	
-	int i = s; //sample - firstsample;
-	int j = (int) trunc(GRIDSIZE * (x-XMIN)/(XMAX-XMIN));
-	int k = (int) trunc(GRIDSIZE * (y-YMIN)/(YMAX-YMIN));
-
-        // Adjust mildly illegal input to the nearest legal grid square
-	if(!GridInRange(j,k)){
-          pair<int,int> newvals = make_legal(x,y);
-          j = newvals.first;
-          k = newvals.second;
-	} 
-	
-        assert(GridInRange(j,k));
-	COUNTS[i][j][k] += 1;
-      }
-    }
-  }
   cerr << "Finished data initialization" << endl;
   double Vprob = 0.5; // prob of each voronoi point being a 1
 
@@ -1022,8 +1020,6 @@ int main ( int argc, char** argv)
   //ComputeLCount(COUNTS,BESTPOINT,LCOUNTS);
   //ComputeTotalCounts(LCOUNTS,TOTALCOUNTS);
 
-  //cerr << "Finished computing counts" << endl;
-  
   int ACCEPT=0;
   
   double newloglik, currentloglik;
@@ -1040,8 +1036,7 @@ int main ( int argc, char** argv)
       cerr << "Failed at top of iter loop" << endl;
       exit(-1);
     }
-//   if (iter % 1000 == 0) {
-//     cout << "iter = " << iter << endl;
+
     if (iter == output_now) {
       cout << "." << flush;
       output_now += output_interval;

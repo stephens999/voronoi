@@ -63,3 +63,8 @@ void OutputRegion(const IntVec2d& Region, ofstream& output, bool OnlyRange);
 void ComputeRegionSizeInSav(const IntVec2d& Region, int& regionsize);
 
 void UpdateZs(double Vprob, const IntVec1d& CellSize, int& regionsize, DoubleVec1d& sumcounts, const DoubleVec2d& lcounts, const DoubleVec1d& totalcounts, IntVec2d& region, IntVec1d& VoronoiZ, const IntVec2d& bestpoint, double cutoff);
+
+// Read VORONOI input from files named 001r, 001s, etc.
+void Read_Oldstyle(const IntVec1d& samplevec, DoubleVec3d& counts, int NIND, int
+  numburn, int numsampled);
+
