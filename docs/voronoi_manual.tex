@@ -153,7 +153,7 @@ We recommend setting up 9 directories and running \SCAT in each.
 
 Through Version 2.0, each \SCAT run needed to consist of exactly 200 samples, of which
 the first 100 will be discarded as burnin.  In Version 2.1, you can specify the number of
-non-burnin samples with the {\tt -N} option.
+non-burnin samples with the {\tt -n} option.
 
 Once the 9 \SCAT runs are finished, their output must be consolidated into the directory
 where \VORONOI will be run.
@@ -305,9 +305,9 @@ no way to diagnose it.
 
 The following options are specified on the \VORONOI command line.
 
-\subsection{Setting the number of samples ({\tt -N})}
+\subsection{Setting the number of samples ({\tt -n})}
 
-The {\tt -N} option allows you to specify how many non-burnin observations are found in each
+The {\tt -n} option allows you to specify how many non-burnin observations are found in each
 \SCAT file (the first 100 observations are always discarded as burnin).  If it is not set,
 100 non-burnin observations are assumed.
 
