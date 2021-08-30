@@ -782,7 +782,7 @@ int main ( int argc, char** argv)
     exit(1);
   }
 
-  bool BUILTIN = (SAVANNAHONLY == -1);
+  bool BUILTIN = (SAVANNAHONLY != -1);
 
   if(!BUILTIN && !READBOUNDARY && !READGRID) {
     cerr << "Need to specify how boundaries are determined" << endl;
