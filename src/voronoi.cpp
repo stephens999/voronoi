@@ -25,6 +25,8 @@ int VLENGTH = 100; // length of vector of Voronoi points
 int SAVANNAHONLY = -1;
 int READGRID = 0;
 int PRINTPROBS = 0;
+bool SAMPLENAMEFILE = false;
+bool KUHNERSIM = false;
 
 int OFFSET = 0;
 
@@ -652,67 +654,44 @@ void UpdateZs(double Vprob, const IntVec1d& CellSize, int& REGIONSIZE, DoubleVec
   }
 }
 
+// Currently, XMIN, XMAX, YMIN, YMAX, and GRIDSIZE are all program global constants
+// COUNTS, despite the capitalization, is a local variable of main()
+void ReadScatInfile(ifstream& locatefile, const string& infile, int skip, int nmcmc, int ind, DoubleVec3d& COUNTS) {
+  double x,y,dummy;
+  // skipping SCAT burnin
+  for(int index = 0; index<skip; index++){
+    locatefile >> x;
+    locatefile >> y;
+    locatefile >> dummy;
+  }
+  
+  for(int index = 0; index<nmcmc; index++){
+    locatefile >> x;
+    locatefile >> y;
+    locatefile >> dummy;
 
-void Read_Oldstyle(const IntVec1d& samplevec, DoubleVec3d& counts, int NIND, int numburn, int numsampled) {
-  for(char TAG = 'r'; TAG<='z'; TAG++){
-     for(int s = 0; s < NIND; s++){
-       int sample = samplevec[s];
-       // new code by Mary Kuhner 8/21/2020, fixing bug that
-       // disallowed elephant numbers > 999
-       string infile = std::to_string(sample);
-       if (infile.length() == 1) {
-         infile = string("00") + infile;
-       }
-       if (infile.length() == 2) {
-         infile = string("0") + infile;
-       }
-       infile += TAG;
-
-       ifstream locatefile(infile.c_str());
-       if(!locatefile.is_open()) {
-         error_and_exit("Failed to open input file " + infile);
-       }
-      
-      double x,y,dummy;
-      // skipping SCAT burnin
-      for(int index = 0; index<numburn; index++){
-	locatefile >> x;
-	locatefile >> y;
-	locatefile >> dummy;
-      }
-      
-      // post-burning steps
-      for(int index = 0; index<numsampled; index++){
-	locatefile >> x;
-	locatefile >> y;
-	locatefile >> dummy;
-	
-	if(x>XMAX || x<XMIN || y>YMAX || y<YMIN){
-	  cerr << "Error: x or y out of bounds" << endl;
-	  cerr << "file = " << infile << endl;
-	  cerr << "x= " << x << endl;
-	  cerr << "y= " << y << endl;
-	  exit(1);
-	}
-	
-	int i = s; //sample - firstsample;
-	int j = (int) trunc(GRIDSIZE * (x-XMIN)/(XMAX-XMIN));
-	int k = (int) trunc(GRIDSIZE * (y-YMIN)/(YMAX-YMIN));
-
-        // Adjust mildly illegal input to the nearest legal grid square
-	if(!GridInRange(j,k)){
-          pair<int,int> newvals = make_legal(x,y);
-          j = newvals.first;
-          k = newvals.second;
-	} 
-	
-        assert(GridInRange(j,k));
-	counts[i][j][k] += 1;
-      }
+    if(x>XMAX || x<XMIN || y>YMAX || y<YMIN){
+      cerr << "Error: x or y out of bounds" << endl;
+      cerr << "file = " << infile << endl;
+      cerr << "x= " << x << endl;
+      cerr << "y= " << y << endl;
+      exit(1);
     }
+
+    int j = (int) trunc(GRIDSIZE * (x-XMIN)/(XMAX-XMIN));
+    int k = (int) trunc(GRIDSIZE * (y-YMIN)/(YMAX-YMIN));
+
+    // Adjust mildly illegal input to the nearest legal grid square
+    if(!GridInRange(j,k)){
+      pair<int,int> newvals = make_legal(x,y);
+      j = newvals.first;
+      k = newvals.second;
+    }
+  	
+    assert(GridInRange(j,k));
+    COUNTS[ind][j][k] += 1;
   }
 }
-
 
 int main ( int argc, char** argv)
 {
@@ -758,11 +737,24 @@ int main ( int argc, char** argv)
       READGRID = 1;
       break;
 
-   case 'N': // number of samples to expect
+   case 'k': // assume input data in kuhnersim directory tree
+             // WARNING: ignores any input sample settings in the path file
+             //  read by 'N' setting
+      KUHNERSIM = true;
+      SAMPLENAMEFILE = true;
+      filenames["pathfile"] = "non_existant_pathfile_invoked";
+      break;
+
+   case 'n':  // specify number of SCAT points per sample
       ++argv;
       --argc;
-      nmcmc = atoi(&argv[1][0]);
-      cout << "Number of MCMC steps = " << nmcmc << endl;
+      VLENGTH = atoi(&argv[1][0]);
+      break;
+     
+   case 'N': // use namefile for input rather than standard "voronoiin.txt" style input
+      SAMPLENAMEFILE = true;
+      ++argv; --argc;
+      filenames["pathfile"] = argv[1];
       break;
 
    case 'S': // seed
@@ -912,11 +904,45 @@ int main ( int argc, char** argv)
   int NIND; // = lastsample - firstsample + 1;
  
   // read in samples to be located from samplefile
-  samplefile >> NIND;
-  vector<int> samplevec(NIND,0);
-  for(int s=0;s<NIND;s++)
-    samplefile >> samplevec[s];
+  vector<string> sampleids;
+  vector<string> samplepaths;
+  vector<int> samplevec;
+  if (SAMPLENAMEFILE) {
+    string sid;
+    while (samplefile >> sid) {
+      sampleids.push_back(sid);
+    }
+    NIND = int(sampleids.size());
 
+    if (KUHNERSIM) {
+      for(int i = 0; i < 9; i++) {
+        samplepaths.push_back(to_string(i+1)+"/outputs/");
+      }
+    } else {
+      ifstream pathfile (filenames["pathfile"].c_str());
+      if (!pathfile.is_open()) {
+        error_and_exit("Could not open path file " + filenames["pathfile"]);
+      }
+      string path_to_samples;
+      while(pathfile >> path_to_samples) {
+        if (path_to_samples.empty())
+          continue;
+        if (path_to_samples.back() != '/')
+          path_to_samples += '/';
+        samplepaths.push_back(path_to_samples);
+      }
+      pathfile.close();
+      cout << "Samples will be pulled from " << to_string(samplepaths.size()) << " directories";
+      cout << " found in " << filenames["pathfile"] << endl;
+    }
+  } else {
+    samplefile >> NIND;
+    for(int s=0;s<NIND;s++) {
+      int foo;
+      samplefile >> foo;
+      samplevec.push_back(foo);
+    }
+  }
 
  //counts of number of times each ind is sampled in each grid square
   vector<vector<vector<double> > > COUNTS(NIND,vector<vector<double> >(GRIDSIZE,vector<double>(GRIDSIZE,0)));
@@ -940,6 +966,80 @@ int main ( int argc, char** argv)
   // so it can be retried if the proposed region doesn't contain all
   // elephants
 
+  if (SAMPLENAMEFILE) {
+    for (int p = 0; p < samplepaths.size(); ++p) {
+      for (int s = 0; s < sampleids.size(); ++s) {
+        string filepath = samplepaths[p] + sampleids[s];
+        ifstream locatefile(filepath.c_str());
+        if(!locatefile.is_open()) {
+          error_and_exit("Failed to open input file " + filepath);
+        }
+    
+        ReadScatInfile(locatefile,filepath,skip,nmcmc,s,COUNTS);
+      }
+    }
+  } else {
+    for(char TAG = 'r'; TAG<='z'; TAG++){
+       //cout << "Reading " << TAG << endl;
+       for(int s = 0; s < NIND; s++){
+         int sample = samplevec[s];
+         // new code by Mary Kuhner 8/21/2020, fixing bug that
+         // disallowed elephant numbers > 999
+         string infile = std::to_string(sample);
+         if (infile.length() == 1) {
+           infile = string("00") + infile;
+         }
+         if (infile.length() == 2) {
+           infile = string("0") + infile;
+         }
+         infile += TAG;
+         //cout << "Reading from file " << infile << endl;
+
+         ifstream locatefile(infile.c_str());
+         if(!locatefile.is_open()) {
+           error_and_exit("Failed to open input file " + infile);
+         }
+    
+         ReadScatInfile(locatefile,infile,skip,nmcmc,s,COUNTS);
+  }
+
+//      double x,y,dummy;
+//      // skipping SCAT burnin
+//      for(int index = 0; index<skip; index++){
+//	locatefile >> x;
+//	locatefile >> y;
+//	locatefile >> dummy;
+//      }
+//      
+//      for(int index = 0; index<nmcmc; index++){
+//	locatefile >> x;
+//	locatefile >> y;
+//	locatefile >> dummy;
+//	
+//	if(x>XMAX || x<XMIN || y>YMAX || y<YMIN){
+//	  cerr << "Error: x or y out of bounds" << endl;
+//	  cerr << "file = " << infile << endl;
+//	  cerr << "x= " << x << endl;
+//	  cerr << "y= " << y << endl;
+//	  exit(1);
+//	}
+//	
+//	int i = s; //sample - firstsample;
+//	int j = (int) trunc(GRIDSIZE * (x-XMIN)/(XMAX-XMIN));
+//	int k = (int) trunc(GRIDSIZE * (y-YMIN)/(YMAX-YMIN));
+//
+//        // Adjust mildly illegal input to the nearest legal grid square
+//	if(!GridInRange(j,k)){
+//          pair<int,int> newvals = make_legal(x,y);
+//          j = newvals.first;
+//          k = newvals.second;
+//	} 
+//  	
+//        assert(GridInRange(j,k));
+//  	COUNTS[i][j][k] += 1;
+//      }
+    }
+  }
   cerr << "Finished data initialization" << endl;
   double Vprob = 0.5; // prob of each voronoi point being a 1
 
