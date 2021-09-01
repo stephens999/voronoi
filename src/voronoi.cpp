@@ -748,7 +748,7 @@ int main ( int argc, char** argv)
    case 'n':  // specify number of SCAT points per sample
       ++argv;
       --argc;
-      VLENGTH = atoi(&argv[1][0]);
+      nmcmc = atoi(&argv[1][0]);
       break;
      
    case 'N': // use namefile for input rather than standard "voronoiin.txt" style input
