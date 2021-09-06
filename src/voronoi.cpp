@@ -1001,45 +1001,10 @@ int main ( int argc, char** argv)
          }
     
          ReadScatInfile(locatefile,infile,skip,nmcmc,s,COUNTS);
-  }
-
-//      double x,y,dummy;
-//      // skipping SCAT burnin
-//      for(int index = 0; index<skip; index++){
-//	locatefile >> x;
-//	locatefile >> y;
-//	locatefile >> dummy;
-//      }
-//      
-//      for(int index = 0; index<nmcmc; index++){
-//	locatefile >> x;
-//	locatefile >> y;
-//	locatefile >> dummy;
-//	
-//	if(x>XMAX || x<XMIN || y>YMAX || y<YMIN){
-//	  cerr << "Error: x or y out of bounds" << endl;
-//	  cerr << "file = " << infile << endl;
-//	  cerr << "x= " << x << endl;
-//	  cerr << "y= " << y << endl;
-//	  exit(1);
-//	}
-//	
-//	int i = s; //sample - firstsample;
-//	int j = (int) trunc(GRIDSIZE * (x-XMIN)/(XMAX-XMIN));
-//	int k = (int) trunc(GRIDSIZE * (y-YMIN)/(YMAX-YMIN));
-//
-//        // Adjust mildly illegal input to the nearest legal grid square
-//	if(!GridInRange(j,k)){
-//          pair<int,int> newvals = make_legal(x,y);
-//          j = newvals.first;
-//          k = newvals.second;
-//	} 
-//  	
-//        assert(GridInRange(j,k));
-//  	COUNTS[i][j][k] += 1;
-//      }
+      }
     }
   }
+
   cerr << "Finished data initialization" << endl;
   double Vprob = 0.5; // prob of each voronoi point being a 1
 
@@ -1264,6 +1229,9 @@ int main ( int argc, char** argv)
   }
 
   for(int i =0; i<NIND; i++){
+    # the implicit map between individual number and string identitier is set up
+    # when ReadScatInfile() is called; via the passed argument "s" in the calling routine.
+    printprobsfile << "#" << sampleids[i] << endl;
     for(int j = 0; j<GRIDSIZE; j++){
       for(int k=0; k<GRIDSIZE; k++){
         assert(!(INDPROBS[i][j][k] != 0.0 && !GridInRange(j,k)));
