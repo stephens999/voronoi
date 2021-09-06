@@ -1229,8 +1229,8 @@ int main ( int argc, char** argv)
   }
 
   for(int i =0; i<NIND; i++){
-    # the implicit map between individual number and string identitier is set up
-    # when ReadScatInfile() is called; via the passed argument "s" in the calling routine.
+    // the implicit map between individual number and string identitifer is set up
+    // when ReadScatInfile() is called; via the passed argument "s" in the calling routine.
     printprobsfile << "#" << sampleids[i] << endl;
     for(int j = 0; j<GRIDSIZE; j++){
       for(int k=0; k<GRIDSIZE; k++){
