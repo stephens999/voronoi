@@ -599,13 +599,7 @@ void UpdateZs(double Vprob, const IntVec1d& CellSize, int& REGIONSIZE, DoubleVec
   double newloglik, currentloglik;
   double newsumcounts;
 
-  // Changed by Mary Kuhner 9/2/2020:  do not reconsider polygons which are entirely
-  // outside species range (i.e. CellSize[i] == 0).
-
   for(int l=0; l<VLENGTH; l++){
-    if (CellSize[l] == 0) {
-      continue;  // we will not toggle this polygon as it's outside the species range
-    }
 
     //compute relative prob of 0 and 1 v point
     newloglik = 0; currentloglik = 0;
@@ -655,7 +649,7 @@ void UpdateZs(double Vprob, const IntVec1d& CellSize, int& REGIONSIZE, DoubleVec
 }
 
 // Currently, XMIN, XMAX, YMIN, YMAX, and GRIDSIZE are all program global constants
-// COUNTS, despite the capitalization, is a local variable of main()
+// COUNTS, despite the capitalization, is a local variable of the primary routine
 void ReadScatInfile(ifstream& locatefile, const string& infile, int skip, int nmcmc, int ind, DoubleVec3d& COUNTS) {
   double x,y,dummy;
   // skipping SCAT burnin
@@ -744,6 +738,12 @@ int main ( int argc, char** argv)
       SAMPLENAMEFILE = true;
       filenames["pathfile"] = "non_existant_pathfile_invoked";
       break;
+
+   case 'm':  // number of steps in the VORONOI mcmc, including burnin
+      ++argv; 
+      --argc;
+      NITER = atoi(&argv[1][0]);
+      break; 
 
    case 'n':  // specify number of SCAT points per sample
       ++argv;
@@ -1023,10 +1023,6 @@ int main ( int argc, char** argv)
     ComputeCellSizeInRange(BESTPOINT,CellSize);
     // Initialize polygons outside species range to non-alive
     for(int l = 0; l<VLENGTH; l++) {
-      if (CellSize[l] == 0) {   // outside species range is always false
-        VoronoiZ[l] = false;
-        continue;
-      }
       if (force_solution) {
         VoronoiZ[l] = true;   // forcing everything else to be true
         continue;
@@ -1231,7 +1227,11 @@ int main ( int argc, char** argv)
   for(int i =0; i<NIND; i++){
     // the implicit map between individual number and string identitifer is set up
     // when ReadScatInfile() is called; via the passed argument "s" in the calling routine.
-    printprobsfile << "#" << sampleids[i] << endl;
+    if(SAMPLENAMEFILE) {
+      printprobsfile << "#" << sampleids[i] << endl;
+    } else {
+      printprobsfile << "#" << i << endl;
+    }
     for(int j = 0; j<GRIDSIZE; j++){
       for(int k=0; k<GRIDSIZE; k++){
         assert(!(INDPROBS[i][j][k] != 0.0 && !GridInRange(j,k)));
