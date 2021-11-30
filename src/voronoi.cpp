@@ -569,6 +569,7 @@ void ComputeCellSizeInRange(const IntVec2d& BestPoint, IntVec1d& CellSize) {
   }
 }
 
+// dead code!
 void OutputRegion(const IntVec2d& REGION, ofstream& output, bool OnlyRange) {
  
   for(int j = 0; j<GRIDSIZE; j++){
@@ -774,6 +775,7 @@ int main ( int argc, char** argv)
       break;
 
    case 'k': // assume input data in kuhnersim directory tree
+
              // WARNING: ignores any input sample settings in the path file
              //  read by 'N' setting
       KUHNERSIM = true;
@@ -899,14 +901,15 @@ int main ( int argc, char** argv)
     }
   }
 
+  string samplefilename = filenames["samples"];
+  ifstream samplefile(samplefilename.c_str());
+
   string mapinfoname = filenames["output"] + "_mapinfo";
   ofstream mapinfofile (mapinfoname.c_str());
   string regionfilename = filenames["output"] + "_regions";
   ofstream regionfile (regionfilename.c_str());
   string indprobfilename = filenames["output"] + "_indprobs";
   ofstream indprobfile (indprobfilename.c_str());
-  string samplefilename = filenames["samples"];
-  ifstream samplefile(samplefilename.c_str());
   string tracefilename = filenames["output"] + "_trace";
   ofstream tracefile(tracefilename.c_str());
   
@@ -1241,6 +1244,18 @@ int main ( int argc, char** argv)
       exit(-1);
     }
 
+    // DEBUG
+    if(iter==BURNIN){
+      for(int j = 0; j<GRIDSIZE; j++){
+ 	for(int k=0; k<GRIDSIZE; k++){
+          assert(PROB[j][k] == 0);
+          for(int i=0; i<NIND; i++) {
+            assert(INDPROBS[i][j][k] == 0);
+          }
+        }
+      }
+    }
+
     if(iter>BURNIN){
       // gather outlier data
       IntVec1d poss = outlier_cumulatives[REGIONSIZE]; 
@@ -1272,9 +1287,15 @@ int main ( int argc, char** argv)
   
   for(int j = 0; j<GRIDSIZE; j++){
     for(int k=0; k<GRIDSIZE; k++){
-      output << PROB[j][k]/(NITER - BURNIN) << " ";
+      if (!PRINTPROBS) {
+        output << PROB[j][k]/(NITER - BURNIN) << " ";
+      } else {
+        float lati = XCenterpoint(j);
+        float longi = YCenterpoint(k);
+        output << lati << " " << longi << " " << PROB[j][k]/(NITER-BURNIN) << endl;
+      }
     }
-    output << endl;
+    if (!PRINTPROBS) output << endl;
   }
 
   ofstream outlierfile ("outlier.tsv");
