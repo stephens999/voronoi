@@ -65,3 +65,6 @@ void ComputeRegionSizeInSav(const IntVec2d& Region, int& regionsize);
 void UpdateZs(double Vprob, const IntVec1d& CellSize, int& regionsize, DoubleVec1d& sumcounts, const DoubleVec2d& lcounts, const DoubleVec1d& totalcounts, IntVec2d& region, IntVec1d& VoronoiZ, const IntVec2d& bestpoint, double cutoff);
 
 void ReadScatInfile(ifstream& locatefile, const string& infile, int skip, int nmcmc, int ind, DoubleVec3d& COUNTS);
+
+IntVec1d DescendingSortLinearize(const DoubleVec2d& IndCounts);
+IntVec2d MakeOutlierCumulatives(const DoubleVec3d& COUNTS);
