@@ -687,6 +687,42 @@ void ReadScatInfile(ifstream& locatefile, const string& infile, int skip, int nm
   }
 }
 
+IntVec1d DescendingSortLinearize(const DoubleVec2d& IndCounts) {
+  IntVec1d linear;
+  for(DoubleVec2d::iterator row = IndCounts.begin(); row != IndCounts.end(); ++row) {
+    linear.insert(linear.end(),row.begin(),row.end());
+  }
+  // sort in descending order
+  std::sort(linear.begin(),linear.end(),greater<int>());
+  return linear;
+}
+
+IntVec2d MakeOutlierCumulatives(const DoubleVec3d& COUNTS) {
+  // initialize the innermost vector with 1 element of value 0
+  // so that the using code can say, "I want the cumulative count for the 5 biggest spaces"
+  // and get that by accessing element[5] rather than element[4]
+  IntVec2d outs(COUNTS.size(),IntVec1d(1,0));
+  for(int ind = 0; ind < COUNTS.size(); ind++) {
+    IntVec1d indcount = DescendingSortLinearize(COUNTS[ind]);
+    sum = 0;
+    for(IndVec1d::iterator elem = indcount.begin(); elem != indcount.end(); ++elem) {
+      sum += *elem;
+      outs[ind].push_back(sum);
+      }
+    }
+  }
+
+  // flip the return vector so that the dimensions are by how_many_squares, then individual
+  // relying on the "outs" vector being square
+  IntVec2d outcums(outs[0].size(),IntVec1d(outs.size(),-1)
+  for(int ind = 0; ind < outs.size(); ++ind) {
+    for(int sz = 0; sz < outs[ind].size(); ++sz) {
+      outcums[sz][ind] = outs[ind][sz];
+    }
+  }
+  return outcums;
+}
+
 int main ( int argc, char** argv)
 {
   cout << "VORONOI version " << VORONOI_VERSION << " ";
@@ -1005,6 +1041,9 @@ int main ( int argc, char** argv)
     }
   }
 
+  // Do setup necessary for outlier detection
+  IntVec2d outlier_cumulatives = MakeOutlierCumulatives(COUNTS);
+
   cerr << "Finished data initialization" << endl;
   double Vprob = 0.5; // prob of each voronoi point being a 1
 
@@ -1088,7 +1127,9 @@ int main ( int argc, char** argv)
   int output_now = NITER / 5;
   int output_interval = output_now;
   cout << "Starting MCMC iterations" << flush;
-
+  IntVec2d outlier_possibles;
+  IntVec2d outlier_achieved;
+  
   for(int iter = 0; iter<NITER; iter++){
     assert(SumCountsLegal(SUMCOUNTS));
     if(!ProgramStateValid(VoronoiX, VoronoiY, VoronoiZ, BESTPOINT, DIST,
@@ -1195,6 +1236,12 @@ int main ( int argc, char** argv)
     }
 
     if(iter>BURNIN){
+      // gather outlier data
+      IntVec1d poss = outlier_cumulative[REGIONSIZE]; 
+      IntVec1d achieved(SUMCOUNTS.begin(),SUMCOUNTS.end());
+      outlier_possibles.push_back(poss);
+      outlier_achieved.push_back(achieved);
+
       for(int j = 0; j<GRIDSIZE; j++){
  	for(int k=0; k<GRIDSIZE; k++){
 	  int inrange = GridInRange(j,k);
@@ -1224,13 +1271,17 @@ int main ( int argc, char** argv)
     output << endl;
   }
 
+  ofstream outlierfile ("outlier.tsv");
+
   for(int i =0; i<NIND; i++){
     // the implicit map between individual number and string identitifer is set up
     // when ReadScatInfile() is called; via the passed argument "s" in the calling routine.
     if(SAMPLENAMEFILE) {
       printprobsfile << "#" << sampleids[i] << endl;
+      outlierfile << "#" << sampleids[i];
     } else {
       printprobsfile << "#" << i << endl;
+      outlierfile << "#" << i;
     }
     for(int j = 0; j<GRIDSIZE; j++){
       for(int k=0; k<GRIDSIZE; k++){
@@ -1245,8 +1296,12 @@ int main ( int argc, char** argv)
       }
       indprobfile << endl;
     }
+    assert(outliers_possible[i].size() == outliers_achieved[i].size());
+    for(IntVec1d::size_type j = 0; j < outliers_possible[i].size(); ++j) {
+      outlierfile << "\t" << outliers_achieved[j][i] << "/" << outliers_possible[j][i];
+    }
+    outlierfile << endl;
   }
 
-  
 cout << endl << "Program done" << endl;
 }
