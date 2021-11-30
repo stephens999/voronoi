@@ -688,9 +688,16 @@ void ReadScatInfile(ifstream& locatefile, const string& infile, int skip, int nm
 }
 
 IntVec1d DescendingSortLinearize(const DoubleVec2d& IndCounts) {
+  IntVec2d intcounts;
+  for(DoubleVec2d::const_iterator ind = IndCounts.begin(); ind != IndCounts.end(); ++ind) {
+    IntVec1d intcnt;
+    std::transform( (*ind).begin(), (*ind).end(), intcnt.begin(),
+      [](double x) { return int(x); } );
+  }
+
   IntVec1d linear;
-  for(DoubleVec2d::iterator row = IndCounts.begin(); row != IndCounts.end(); ++row) {
-    linear.insert(linear.end(),row.begin(),row.end());
+  for(IntVec2d::iterator row = intcounts.begin(); row != intcounts.end(); ++row) {
+    linear.insert(linear.end(),(*row).begin(),(*row).end());
   }
   // sort in descending order
   std::sort(linear.begin(),linear.end(),greater<int>());
@@ -704,17 +711,16 @@ IntVec2d MakeOutlierCumulatives(const DoubleVec3d& COUNTS) {
   IntVec2d outs(COUNTS.size(),IntVec1d(1,0));
   for(int ind = 0; ind < COUNTS.size(); ind++) {
     IntVec1d indcount = DescendingSortLinearize(COUNTS[ind]);
-    sum = 0;
-    for(IndVec1d::iterator elem = indcount.begin(); elem != indcount.end(); ++elem) {
+    int sum = 0;
+    for(IntVec1d::iterator elem = indcount.begin(); elem != indcount.end(); ++elem) {
       sum += *elem;
       outs[ind].push_back(sum);
-      }
     }
   }
 
   // flip the return vector so that the dimensions are by how_many_squares, then individual
-  // relying on the "outs" vector being square
-  IntVec2d outcums(outs[0].size(),IntVec1d(outs.size(),-1)
+  // relying on the "outs" vector being non-ragged
+  IntVec2d outcums(outs[0].size(),IntVec1d(outs.size(),-1));
   for(int ind = 0; ind < outs.size(); ++ind) {
     for(int sz = 0; sz < outs[ind].size(); ++sz) {
       outcums[sz][ind] = outs[ind][sz];
@@ -1237,7 +1243,7 @@ int main ( int argc, char** argv)
 
     if(iter>BURNIN){
       // gather outlier data
-      IntVec1d poss = outlier_cumulative[REGIONSIZE]; 
+      IntVec1d poss = outlier_cumulatives[REGIONSIZE]; 
       IntVec1d achieved(SUMCOUNTS.begin(),SUMCOUNTS.end());
       outlier_possibles.push_back(poss);
       outlier_achieved.push_back(achieved);
@@ -1296,9 +1302,9 @@ int main ( int argc, char** argv)
       }
       indprobfile << endl;
     }
-    assert(outliers_possible[i].size() == outliers_achieved[i].size());
-    for(IntVec1d::size_type j = 0; j < outliers_possible[i].size(); ++j) {
-      outlierfile << "\t" << outliers_achieved[j][i] << "/" << outliers_possible[j][i];
+    assert(outlier_possibles[i].size() == outlier_achieved[i].size());
+    for(IntVec1d::size_type j = 0; j < outlier_possibles[i].size(); ++j) {
+      outlierfile << "\t" << outlier_achieved[j][i] << "/" << outlier_possibles[j][i];
     }
     outlierfile << endl;
   }
