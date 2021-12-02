@@ -691,9 +691,8 @@ void ReadScatInfile(ifstream& locatefile, const string& infile, int skip, int nm
 IntVec1d DescendingSortLinearize(const DoubleVec2d& IndCounts) {
   IntVec2d intcounts;
   for(DoubleVec2d::const_iterator ind = IndCounts.begin(); ind != IndCounts.end(); ++ind) {
-    IntVec1d intcnt;
-    std::transform( (*ind).begin(), (*ind).end(), intcnt.begin(),
-      [](double x) { return int(x); } );
+    IntVec1d intcnt((*ind).begin(), (*ind).end());
+    intcounts.push_back(intcnt);
   }
 
   IntVec1d linear;
