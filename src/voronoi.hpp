@@ -68,3 +68,5 @@ void ReadScatInfile(ifstream& locatefile, const string& infile, int skip, int nm
 
 IntVec1d DescendingSortLinearize(const DoubleVec2d& IndCounts);
 IntVec2d MakeOutlierCumulatives(const DoubleVec3d& COUNTS);
+
+IntVec2d MakeMask(int gridsize, bool readboundary, const DoubleVec1d& boundaryx, const DoubleVec1d& boundaryy, const Mapgrid& mymapgrid);

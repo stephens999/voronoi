@@ -729,6 +729,21 @@ IntVec2d MakeOutlierCumulatives(const DoubleVec3d& COUNTS) {
   return outcums;
 }
 
+IntVec2d MakeMask(int gridsize, bool readboundary, const DoubleVec1d& boundaryx, const DoubleVec1d& boundaryy, const Mapgrid& mymapgrid) {
+  int jcoord;
+  int kcoord;
+  vector<vector<int> > tempmask(gridsize,vector<int>(gridsize,0));
+  cout << endl;
+  for (jcoord = 0; jcoord < GRIDSIZE; ++jcoord) {
+    for (kcoord = 0; kcoord < GRIDSIZE ; ++kcoord) {
+      if (OldGridInRange(jcoord,kcoord,readboundary,boundaryx,boundaryy,mymapgrid)){
+        tempmask[jcoord][kcoord] = 1;
+      }
+    }
+  }
+  return(tempmask);
+}
+
 int main ( int argc, char** argv)
 {
   cout << "VORONOI version " << VORONOI_VERSION << " ";
@@ -887,18 +902,8 @@ int main ( int argc, char** argv)
   // This is expected both to make the code faster and to remove a strong bias
   // in estimation of Vprob.
 
-  int jcoord;
-  int kcoord;
-  vector<vector<int> > tempmask(GRIDSIZE,vector<int>(GRIDSIZE,0));
-  MASK = tempmask;
-  cout << endl;
-  for (jcoord = 0; jcoord < GRIDSIZE; ++jcoord) {
-    for (kcoord = 0; kcoord < GRIDSIZE ; ++kcoord) {
-      if (OldGridInRange(jcoord,kcoord,READBOUNDARY,boundaryx,boundaryy,mymapgrid)){
-        MASK[jcoord][kcoord] = 1;
-      }
-    }
-  }
+
+  MASK = MakeMask(GRIDSIZE, READBOUNDARY, boundaryx, boundaryy, mymapgrid);
 
   string samplefilename = filenames["samples"];
   ifstream samplefile(samplefilename.c_str());
@@ -1322,8 +1327,8 @@ int main ( int argc, char** argv)
       }
       indprobfile << endl;
     }
-    assert(outlier_possibles[i].size() == outlier_achieved[i].size());
-    for(IntVec1d::size_type j = 0; j < outlier_possibles[i].size(); ++j) {
+    assert(outlier_possibles.size() == outlier_achieved.size());
+    for(IntVec1d::size_type j = 0; j < outlier_possibles.size(); ++j) {
       outlierfile << "\t" << outlier_achieved[j][i] << "/" << outlier_possibles[j][i];
     }
     outlierfile << endl;
