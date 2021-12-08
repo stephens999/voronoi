@@ -1328,8 +1328,14 @@ int main ( int argc, char** argv)
       indprobfile << endl;
     }
     assert(outlier_possibles.size() == outlier_achieved.size());
+    // we output only every 100th pair for filespace conservation
+    int tilnext = 100;
+    int whichone = 0;
     for(IntVec1d::size_type j = 0; j < outlier_possibles.size(); ++j) {
-      outlierfile << "\t" << outlier_achieved[j][i] << "/" << outlier_possibles[j][i];
+      if (j == whichone) {
+        outlierfile << "\t" << outlier_achieved[j][i] << "/" << outlier_possibles[j][i];
+        whichone += tilnext;
+      }
     }
     outlierfile << endl;
   }
