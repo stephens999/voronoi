@@ -569,6 +569,17 @@ void ComputeCellSizeInRange(const IntVec2d& BestPoint, IntVec1d& CellSize) {
   }
 }
 
+void OutputBestPoint(const IntVec2d& bestpoint, ofstream& output) {
+
+  for (IntVec2d::size_type j = 0; j < GRIDSIZE; ++j) {
+    for (IntVec1d::size_type k = 0; k < GRIDSIZE; ++k) {
+       output << bestpoint[j][k] << " ";
+    }
+    output << endl;
+  }
+  output << "#" << endl;
+}
+
 // dead code!
 void OutputRegion(const IntVec2d& REGION, ofstream& output, bool OnlyRange) {
  
@@ -1142,6 +1153,7 @@ int main ( int argc, char** argv)
   cout << "Starting MCMC iterations" << flush;
   IntVec2d outlier_possibles;
   IntVec2d outlier_achieved;
+  ofstream polygonout("vorpolys.txt");
   
   for(int iter = 0; iter<NITER; iter++){
     assert(SumCountsLegal(SUMCOUNTS));
@@ -1283,6 +1295,8 @@ int main ( int argc, char** argv)
 	regionfile << endl;
       }
     }
+
+    OutputBestPoint(BESTPOINT,polygonout);
   }
   cout << "." << endl;
   
