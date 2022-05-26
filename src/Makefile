@@ -9,7 +9,7 @@ INCLUDE = -I. -I..
 #CFLAGS = -O2 -DBIGDATASETS $(INCLUDE)
 #CFLAGS = -g $(INCLUDE)
 #CFLAGS = -O2 -Wall  $(INCLUDE)
-CFLAGS = -O3  $(INCLUDE)
+CFLAGS = -O3 -DNDEBUG -Wall -Wmissing-declarations $(INCLUDE)
 #CFLAGS = -g -a -O2 -pg -DNDEBUG $(INCLUDE)
 
 #LDFLAGS = -llapack -lg2c -lm
