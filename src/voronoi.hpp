@@ -59,6 +59,7 @@ void ComputeSumCounts2(const DoubleVec2d& LCounts, const IntVec1d& vz, DoubleVec
 void ComputeRegion(const IntVec1d& vz, IntVec2d& Region, const IntVec2d& BestPoint);
 void ComputeCellSizeInRange(const IntVec2d& BestPoint, IntVec1d& CellSize);
 
+void OutputBestPoint(const IntVec2d& bestpoint, ofstream& ooutput);
 void OutputRegion(const IntVec2d& Region, ofstream& output, bool OnlyRange);
 void ComputeRegionSizeInSav(const IntVec2d& Region, int& regionsize);
 
