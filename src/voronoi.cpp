@@ -1294,9 +1294,9 @@ int main ( int argc, char** argv)
 	}
 	regionfile << endl;
       }
+      OutputBestPoint(BESTPOINT,polygonout);
     }
 
-    OutputBestPoint(BESTPOINT,polygonout);
   }
   cout << "." << endl;
   
